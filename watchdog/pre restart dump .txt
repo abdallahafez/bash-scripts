@@ -1,0 +1,34 @@
+ /opt/l2/scripts/dump.sh
+########## Java Periodic Dump #################
+*/30 * * * * sh /opt/l2/scripts/dump.sh
+
+###################################################################
+
+NOW=`date '+%Y-%m-%d %H:%M'`
+ALARM_LOG_TIME=`date '+%Y-%m-%d %H:%M:%S.%3N%z'`
+log_dir="/home/tomcat/dumps"
+PID_tomcat=`ps -A -o "%u:%p:%a" | grep -v grep | grep HazelcastMemberStarter | grep -v ARCSIGHT | cut -d ":" -f 2`
+PID_hazelcast=`ps -A -o "%u:%p:%a" | grep -v grep | grep tomcat-juli | grep -v ARCSIGHT | cut -d ":" -f 2`
+network_stat() {
+			echo "Running netstat..."
+                        echo "$NOW - netstat dump" >> $log_dir/server.log
+                        netstat -anp > $log_dir/netstat-"$NOW".dump
+}
+java_dump() {
+			SRVC=$1
+			PID=$2
+		if [ "$PID" != "" ]; then
+			echo "Running jmap for memory $SRVC histogram dump..."
+                        echo "$NOW - $SRVC jmap dump" >> $log_dir/server.log
+                        sudo -u tomcat jmap -histo $PID > $log_dir/jmap-$SRVC-"$NOW".dump
+                        echo "Getting $SRVC thread dump..."
+                        echo "$NOW - $SRVC thread dump" >> $log_dir/server.log
+                        sudo -u tomcat jstack -l  $PID  > $log_dir/jstack-$SRVC-"$NOW".dump
+			kill -s QUIT $PID
+                        sleep 5
+		fi
+}
+
+network_stat
+java_dump tomcat $PID_tomcat 
+java_dump hazelcast $PID_hazelcast

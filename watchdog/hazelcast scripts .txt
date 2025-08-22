@@ -1,0 +1,58 @@
+edit file :
+/opt/l2/scripts/monitor.sh
+
+add this lines at the end  
+"
+hazelcst=`sudo sh   /home/tomcat/jpsstat.sh  -1 |grep HazelcastMemberStarter|awk '{print $4}'`
+
+        x=1
+        while [ $x -le 10 ] ;
+        do
+
+        sleep 1
+        hazelcst1=`sudo sh   /home/tomcat/jpsstat.sh  -1 |grep HazelcastMemberStarter|awk '{print $4}'`
+        if [[ $hazelcst1 -ge  $hazelcst ]] 
+                then 
+                hazelcst="$hazelcst1"
+                 echo "$hazelcst"
+        fi
+
+        x=$(( $x + 1 ))
+
+        done
+
+
+if [[ $hazelcst -ge 7700 ]]
+then
+echo "$l_date|MINOR|hazelcast_Mem_ALM_02|Application|Tomcat memory is $hazelcst - it hits the critical value (7.7G)
+" >> /var/log/TOM_MEM.log
+fi
+
+
+"
+
+***************************************************************************
+1- mkdir /opt/hazelcast/latest/logs/backuplogs/
+#create the file and add "" to it
+2- vi /opt/hazelcast/latest/logs/logrotate.sh 
+
+"
+#!/bin/bash
+logdir=/opt/hazelcast/latest/logs/archived/
+backup=/opt/hazelcast/latest/logs/backuplogs/
+gzip $backup*.log 2> /dev/null
+day=`date +%Y-%m-%d`
+day1=`date -d '1 day ago' +%Y-%m-%d`
+hour=` date "+%H.%M"`
+logfiles=`ls -tr  $logdir |grep $day| tail -n 7 `
+logfiles+=" "
+logfiles+=`ls -tr  $logdir |grep $day1| tail -n 7 `
+#echo $logfiles
+
+for file in $logfiles 
+do 
+mv --backup=existing $logdir$file $backup/$file$hour.log
+
+
+done
+"

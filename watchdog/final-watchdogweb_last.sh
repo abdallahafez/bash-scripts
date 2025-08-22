@@ -1,0 +1,165 @@
+#!/bin/bash
+
+# USAGE watchdogweb.sh service link
+
+# E.g.: 
+
+#     $ watchdogweb.sh WIT-Software http://www.wit-software.com/
+
+#
+
+# resolve links - $0 may be a softlink
+
+PRG="$0"
+
+while [ -h "$PRG" ]; do
+
+        ls=`ls -ld "$PRG"`
+
+        link=`expr "$ls" : '.*-> \(.*\)$'`
+
+        if expr "$link" : '/.*' > /dev/null; then
+
+                PRG="$link"
+
+        else
+
+                PRG=`dirname "$PRG"`/"$link"
+
+        fi
+
+done
+
+# Get standard environment variables
+
+PRGDIR=`dirname "$PRG"`
+
+#cd $PRGDIR
+
+WDPATH=$PRGDIR
+
+PATH=$WDPATH:$PATH:/usr/local/bin
+
+NOW=`date '+%Y-%m-%d %H:%M'`
+
+process=$3
+
+if [ "$process" == "" ]; then
+
+        process="tomcat"
+
+fi
+
+TRAPIDFILE=../traps/trapid_$process
+
+TRAPFILE=../traps/trapsweb_$process
+
+if [ $# -lt 2 ]; then
+
+        echo "USAGE watchdogweb.sh service link"
+
+        echo "E.g.:"
+
+        echo "    $ watchdogweb.sh WIT-Software http://www.wit-software.com/"
+
+        echo 
+
+        exit
+
+fi
+
+PATH=$PATH:/usr/local/bin:/usr/bin; export PATH
+
+TRAP_ID=`cat $WDPATH/$TRAPIDFILE 2> /dev/null`
+
+R=$?
+
+if [ $R -eq 1 ]; then
+
+        TRAP_ID=$4
+
+        echo $TRAP_ID > $WDPATH/$TRAPIDFILE
+
+fi
+
+TRAPS=`cat $WDPATH/$TRAPFILE 2> /dev/null`
+
+R=$?
+
+#echo Traps = $TRAPS
+
+if [ $R -eq 1 ]; then
+
+        TRAPS=""
+
+fi
+
+#touch $WDPATH/$TRAPIDFILE
+
+touch $WDPATH/$TRAPFILE
+
+echo -n "$NOW $process status: "
+
+/usr/bin/java -cp $WDPATH:$WDPATH/../lib TestHttpConnection $2
+
+R1=$?
+
+if [ $R1 -eq 0 ]; then
+
+        echo "Ok"
+
+        for name in $TRAPS 
+
+        do
+
+                SERVICE=`echo $name | cut -f1 -d";"`
+
+                TRAPID=`echo $name | cut -f2 -d";"`
+
+                if [ "$SERVICE" = "$1" ]; then
+
+			echo "$NOW Clearing the alarm if the validation is OK  for trap id $TRAP_ID " >> logs/server.log
+
+                        alarmsender.sh clear $TRAPID "Clear $process alarm" $process $TRAPFILE $TRAPIDFILE $WDPATH
+
+                fi
+
+        done
+
+        cat $WDPATH/$TRAPFILE | grep -v "$1;" > $WDPATH/$TRAPFILE 2> /dev/null
+
+else
+
+        R2=`cat $WDPATH/$TRAPFILE | grep "$1;" 2> /dev/null`
+
+        echo "R1: $R1  R2: $R2"  
+
+        if [ -z "$R2" ]; then
+
+		echo "$NOW Raising alarm for $process"  with trap id $TRAP_ID >> logs/server.log
+
+                echo "Raising alarm. Error received: $R1"
+
+                echo "Error received $1 ($2)"
+
+		 echo "$1;$TRAP_ID" >> $WDPATH/$TRAPFILE
+
+                alarmsender.sh raise $TRAP_ID "Error received $1 ($2)" $process $TRAPFILE $TRAPIDFILE $WDPATH
+
+                TRAP_ID=`echo "$TRAP_ID" |awk '{print 1+$1}' `
+
+        else
+
+                echo "Alarm already raised. Restarting service $process Error received: $R1"
+
+		echo "$NOW retrty to restore the $process  with trap id $TRAP_ID" >> logs/server.log
+
+                alarmsender.sh retry $TRAP_ID "Error received $1 ($2)" $process $TRAPFILE $TRAPIDFILE $WDPATH
+
+        fi
+
+fi
+
+echo $TRAP_ID > $WDPATH/$TRAPIDFILE
+
+

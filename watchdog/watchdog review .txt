@@ -1,0 +1,360 @@
+: '
+
+line1 
+line 2 
+
+'
+#!/bin/bash
+
+# resolve links - $0 may be a softlink
+# $0 is for the file name of the current script 
+PRG="$0"
+while [ -h "$PRG" ]; do
+        ls=`ls -ld "$PRG"`
+        link=`expr "$ls" : '.*-> \(.*\)$'`
+        if expr "$link" : '/.*' > /dev/null; then
+                PRG="$link"
+        else
+                PRG=`dirname "$PRG"`/"$link"
+        fi
+done
+# Get standard environment variables
+PRGDIR=`dirname "$PRG"`
+#PRGDIR=/opt/wit/mpesa/watchdog
+cd $PRGDIR
+WDPATH=$PRGDIR
+
+NOW=`date '+%Y%m%d'`
+LOG=logs/watchdog.log_$NOW
+
+PID_FILE=/opt/wit/mpesa/watchdog/watchdog.pid
+if [ -f ${PID_FILE} ]; then
+  RUNNING=$(ps aux | grep $(cat ${PID_FILE}) | grep watchdog.sh)
+
+#if we have pid of watchdog exit 
+
+  if [ ! -z "${RUNNING}" ]; then
+    echo "An instance of watchdog is already running." >> $LOG
+    exit;
+  fi
+fi
+
+#if the watchdog is disabled exit (to be corrected )
+
+if [ -f $WDPATH/disablewd ]; then
+        echo Watchdog disabled... >> $LOG
+        exit
+
+fi
+
+# Save PID of current watchdog process
+echo $$ > ${PID_FILE}
+
+./scripts/watchdogweball.sh 5000 >> $LOG
+
+
+************************************************************************************
+
+watchdogweball.sh
+"
+#!/bin/bash
+# USAGE watchdogallweb.sh
+# E.g.: 
+#     $ watchdogallweb.sh
+#
+
+# resolve links - $0 may be a softlink
+PRG="$0"
+while [ -h "$PRG" ]; do
+        ls=`ls -ld "$PRG"`
+        link=`expr "$ls" : '.*-> \(.*\)$'`
+        if expr "$link" : '/.*' > /dev/null; then
+                PRG="$link"
+        else
+                PRG=`dirname "$PRG"`/"$link"
+        fi
+done
+# Get standard environment variables
+PRGDIR=`dirname "$PRG"`
+WDPATH=$PRGDIR
+# WDPATH=/opt/wit/mpesa/watchdog/scripts
+
+CONFIGFILE=../conf/wdweb.conf
+
+SERVICES=`cat $WDPATH/$CONFIGFILE | grep -v "#"`
+# SERVICES= 
+# apache;mpesaApacheTest;http://127.0.0.1/mpesa-backoffice/
+# tomcat;mpesaTomcatTest;http://127.0.0.1:8082/mpesa-configuration-server/rest/version
+
+# $? This is the exit status of the last executed command 0 for true and 1 for false
+R=$?
+if [ $R -eq 1 ]; then
+        SERVICES=""
+fi
+
+# may be called with log argument 
+
+if [ "$1" == "log" ]; then
+        $WDPATH/watchdogweb.sh $1 $1 $1 $2
+else 
+
+# name access all line in services
+        for name in $SERVICES
+        do                                     
+        PROCESS=`echo $name | cut -f1 -d";"`
+        SERVICE=`echo $name | cut -f2 -d";"`
+        LINK=`echo $name | cut -f3 -d";"` 
+        $WDPATH/watchdogweb.sh $SERVICE $LINK $PROCESS $1
+
+#The final commands will be like that 
+ #  ./watchdogweb.sh mpesaApacheTest http://127.0.0.1/mpesa-backoffice/ apache 5000 
+ #  ./watchdogweb.sh mpesaTomcatTest http://127.0.0.1:8082/mpesa-configuration-server/rest/version tomcat 5000 
+ #  ./watchdogweb.sh mpesaServiceManagerTest http://127.0.0.1:10000/v1/version service-manager 5000 
+ #  ./watchdogweb.sh mpesaServiceAdapterTest http://127.0.0.1:10002/v1/version service-adapter 5000 
+ #  ./watchdogweb.sh mpesaServiceStorageTest http://127.0.0.1:10001/v1/version storage-service 5000 
+ #  ./watchdogweb.sh mpesaRequestMoneyManagerTest http://127.0.0.1:8434/actuator request-money-manager 5000 
+
+        done
+fi
+
+"
+
+
+***************************************************************************************
+
+
+watchdogweb.sh 
+
+"
+#!/bin/bash
+# USAGE watchdogweb.sh service link
+# E.g.: 
+#     $ watchdogweb.sh WIT-Software http://www.wit-software.com/
+#
+
+
+# resolve links - $0 may be a softlink
+PRG="$0"
+while [ -h "$PRG" ]; do
+        ls=`ls -ld "$PRG"`
+        link=`expr "$ls" : '.*-> \(.*\)$'`
+        if expr "$link" : '/.*' > /dev/null; then
+                PRG="$link"
+        else
+                PRG=`dirname "$PRG"`/"$link"
+        fi
+done
+# Get standard environment variables
+PRGDIR=`dirname "$PRG"`
+#cd $PRGDIR
+WDPATH=$PRGDIR
+
+
+PATH=$WDPATH:$PATH:/usr/local/bin
+
+#  PATH=/opt/wit/mpesa/watchdog/scripts:$PATH:/usr/local/bin
+
+NOW=`date '+%Y-%m-%d %H:%M'`
+process=$3
+
+# if the process not set make it tomcat 
+
+if [ "$process" == "" ]; then
+        process="tomcat"
+fi
+
+TRAPIDFILE=../traps/trapid_$process
+TRAPFILE=../traps/trapsweb_$process
+
+# $# is the number of all arguments if less than 2 exit 
+
+if [ $# -lt 2 ]; then
+        echo "USAGE watchdogweb.sh service link"
+        echo "E.g.:"
+        echo "    $ watchdogweb.sh WIT-Software http://www.wit-software.com/"
+        echo 
+        exit
+fi
+
+PATH=$PATH:/usr/local/bin:/usr/bin; export PATH
+# change the path 
+
+#cat  ./../traps/trapid_apache
+TRAP_ID=`cat $WDPATH/$TRAPIDFILE 2> /dev/null`
+
+# take the trap id and assign it if not exist 
+R=$?
+if [ $R -eq 1 ]; then
+        TRAP_ID=$4
+        echo $TRAP_ID > $WDPATH/$TRAPIDFILE
+fi
+
+# do the same with trap file but the trapfile just empty variable . 
+TRAPS=`cat $WDPATH/$TRAPFILE 2> /dev/null`
+R=$?
+#echo Traps = $TRAPS
+if [ $R -eq 1 ]; then
+        TRAPS=""
+fi
+#touch $WDPATH/$TRAPIDFILE
+touch $WDPATH/$TRAPFILE
+echo -n "$NOW $process status: "
+
+#/usr/bin/java -cp .:./../lib TestHttpConnection http://127.0.0.1/mpesa-backoffice/
+/usr/bin/java -cp $WDPATH:$WDPATH/../lib TestHttpConnection $2
+R1=$?
+
+
+
+if [ $R1 -eq 0 ]; then
+        echo "Ok"
+
+#check if we have previus alarm in trap file 
+        for name in $TRAPS 
+        do
+                SERVICE=`echo $name | cut -f1 -d";"`
+                TRAPID=`echo $name | cut -f2 -d";"`
+                if [ "$SERVICE" = "$1" ]; then
+                        alarmsender.sh clear $TRAPID "Clear $process alarm" $process
+                fi
+        done
+	# remove the entery from previous alarm file 
+        cat $WDPATH/$TRAPFILE | grep -v "$1;" > $WDPATH/$TRAPFILE 2> /dev/null
+else
+        R2=`cat $WDPATH/$TRAPFILE | grep "$1;" 2> /dev/null`
+        echo "R1: $R1  R2: $R2"  
+        
+	# -z True if the length of string is zero
+	if [ -z "$R2" ]; then
+                echo "Raising alarm. Error received: $R1"
+                echo "Error received $1 ($2)"
+	        # alarmsender.sh raise 5001 "Error received $1 ($2)"
+                alarmsender.sh raise 5001 "Error received mpesaTomcatTest (http://127.0.0.1:8082/mpesa-configuration-server/rest/version)" tomcat
+                echo "$1;$TRAP_ID" >> $WDPATH/$TRAPFILE
+                TRAP_ID=$(( $TRAP_ID + 1 ))
+        else
+                echo "Alarm already raised. Restarting service $process Error received: $R1"
+#alarmsender.sh retry 5001 "Error received mpesaTomcatTest (http://127.0.0.1:8082/mpesa-configuration-server/rest/version)" tomcat 
+		alarmsender.sh retry $TRAP_ID "Error received $1 ($2)" $process		
+        fi
+fi
+echo $TRAP_ID > $WDPATH/$TRAPIDFILE
+
+"
+hafez
+5001
+mpesaTomcatTest
+http://127.0.0.1:8082/mpesa-configuration-server/rest/version
+tomcat
+
+
+
+
+*******************************************************************************************
+
+
+ alarmsender.sh 
+
+"
+#!/bin/bash
+#echo $*
+### ALARM SENDER
+NOW=`date '+%Y-%m-%d %H:%M'`
+
+ALARM_LOG_TIME=`date '+%Y-%m-%d %H:%M:%S.%3N%z'`
+
+# resolve links - $0 may be a softlink
+PRG="$0"
+while [ -h "$PRG" ]; do
+        ls=`ls -ld "$PRG"`
+        link=`expr "$ls" : '.*-> \(.*\)$'`
+        if expr "$link" : '/.*' > /dev/null; then
+                PRG="$link"
+        else
+                PRG=`dirname "$PRG"`/"$link"
+        fi
+done
+
+trapid=${2}  
+process=$4
+message=$3
+object="Services"
+
+if [ "${1}" == "clear" ]; then
+        echo "Clearing $process Alarm $trapid: $message"
+                echo "$ALARM_LOG_TIME|NORMAL|$process|$object|$message" >> logs/watchdog-alarm.log
+else
+                if [ "${1}" == "raise" ]; then
+                        echo "Raising $process Alarm $trapid: $message"
+                        echo "$ALARM_LOG_TIME|CRITICAL|$process|$object|$message" >> logs/watchdog-alarm.log
+                else
+                        echo "Alarm for $process (Alarm $trapid: $message) already raised. Retrying servers restart."
+                fi
+
+        if [ "$process" == "tomcat" ]; then
+                PID=`ps -A -o "%u:%p:%a" | grep -v grep | grep tomcat-juli | grep -v ARCSIGHT | cut -d ":" -f 2`
+             
+		# if the PID not empty 
+                if [ "$PID" != "" ]; then
+
+                        echo "Running netstat..."
+                        echo "$NOW - netstat dump" >> logs/server.log
+                        netstat -anp > logs/netstat-"$NOW".dump
+
+                        echo "Running jmap for memory histogram dump..."
+                        echo "$NOW - jmap dump" >> logs/server.log
+                        sudo -u tomcat jmap -histo $PID > logs/jmap-"$NOW".dump
+
+                        echo "Getting tomcat thread dump..."
+                        echo "$NOW - Tomcat thread dump" >> logs/server.log
+                        sudo -u tomcat jstack -l  $PID  > logs/jstack-"$NOW".dump
+                        # not killing the tomcat 
+			kill -s QUIT $PID
+                        sleep 5
+                fi
+
+   echo "$NOW - Stopping $process..." >> logs/server.log
+
+                /opt/wit/mpesa/scripts/tomcat-shutdown.sh
+
+                # wait until tomcat is stopped
+                x=1
+                while [ $x -le 10 ];
+                do
+                  sleep 10
+
+                  PID=`ps -A -o "%u:%p:%a" | grep -v grep | grep tomcat-juli | grep -v ARCSIGHT | cut -d ":" -f 2`
+
+                  if [ "$PID" == "" ]; then
+                    break
+                  fi
+
+                  x=$(( $x + 1 ))
+                done
+
+                if [ "$PID" != "" ]; then
+                  kill -9 -a $PID 2>/dev/null
+                fi
+
+                echo "Starting Tomcat..."
+                echo "$NOW - Starting $process...." >> logs/server.log
+                /opt/wit/mpesa/scripts/tomcat-startup.sh
+        fi
+
+    if [ "$process" == "apache" ]; then
+
+                echo "$NOW - Stopping $process..." >> logs/server.log
+
+                /opt/wit/mpesa/scripts/httpd-shutdown.sh
+
+                sleep 10
+
+                echo "Starting httpd..." >> logs/server.log
+                echo "$NOW - Starting $process...."
+
+                /opt/wit/mpesa/scripts/httpd-startup.sh   
+        fi
+fi
+
+"
+
