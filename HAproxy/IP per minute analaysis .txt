@@ -1,0 +1,59 @@
+while read -r timest;
+
+
+dir="/home/mahma001/haproxy-"
+do
+hours=`echo "$timest" | awk -F  ":" '{print $1}'`
+#echo "$timest" | awk -F  ":" '{print $1}' > /home/mahma001/tmp.log
+#sed -i 's/^M//g' /home/mahma001/tmp.log
+#hours=`cat  /home/mahma001/tmp.log`
+#hours="2024-02-18T13"
+#ls "/home/mahma001/haproxy-$hours"
+#echo "$hours"
+     # ips=($(grep $timest /home/mahma001/haproxy-$hours |grep gateway_frontend|grep " 200 " |cut -d " " -f9 | cut -d ":" -f1 | sort | uniq -c |sed 's/  */ /g') )
+#hour="/home/mahma001/haproxy-$hour"
+#echo "/home/mahma001/haproxy-$hour"
+#echo " "
+
+        grep $timest /home/mahma001/haproxy-$hours |grep gateway_frontend|grep " 200 " |cut -d " " -f9 | cut -d ":" -f1 | sort | uniq -c |sed 's/  */ /g' >> /home/mahma001/tmp.log
+          #for ip in ${ips[@]} ;
+        while read -r ips;
+               do
+
+                ip=`echo "$ips" |awk -F  " " '{print $2}'` 
+               num=`echo "$ips" |awk -F  " " '{print $1}'`
+                echo "$timest;$ip;$num" >> success.log
+                rm -rf /home/mahma001/tmp.log 
+
+                done < /home/mahma001/tmp.log
+
+done < /var/log/haproxy/times.all
+
+
+##########################################################################33
+
+while read -r timest;
+
+dir="/home/mahma001/haproxy-"
+
+do
+
+hours=`echo "$timest" | awk -F  ":" '{print $1}'`
+
+grep $timest $dir$hours |grep gateway_frontend|grep -v " 200 " |cut -d " " -f9 | cut -d ":" -f1 | sort | uniq -c |sed 's/  */ /g' >> /home/mahma001/tmp1.log
+
+        while read -r ips;
+
+               do
+
+                ip=`echo "$ips" |awk -F  " " '{print $2}'`
+
+               num=`echo "$ips" |awk -F  " " '{print $1}'`
+
+                echo "$timest;$ip;$num" >> failed.log
+
+                rm -rf /home/mahma001/tmp1.log
+
+                done < /home/mahma001/tmp1.log
+
+done < /var/log/haproxy/times.all

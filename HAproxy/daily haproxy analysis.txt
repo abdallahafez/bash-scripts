@@ -1,0 +1,73 @@
+#splitting the log file to small files per hour
+
+#date_ar=( $(cat all.log | cut -d ":" -f 1 |uniq| tail -n 710) )
+
+#for hour in ${date_ar[@]}; do
+
+#grep $hour all.log >> tmp/dates/$hour
+
+#done
+
+
+
+# extrating the backend
+
+#rm -rf tmp/backend
+#cat  all.log| grep frontend| cut -d " " -f 13 | sort | uniq | grep backend | cut -d "/" -f 1 |uniq >> tmp/backend1
+#cat  all.log| grep frontend| cut -d " " -f 12 | sort | uniq | grep backend | cut -d "/" -f 1 |uniq >> tmp/backend1
+#echo "backend" >> tmp/backend
+#echo "fallback" >> tmp/backend
+#cat tmp/backend1 | sort | uniq >> tmp/backend
+#rm -rf tmp/backend1
+
+
+
+
+#checking the timers
+cd /home/haproxy/tmp/dates/
+for f in * ; do
+
+
+input="/home/haproxy/tmp/backend"
+
+while IFS= read -r backend
+
+do
+
+
+
+A=` grep -i $backend $f  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$1 ;count=count+1}END{print sum/count}'`
+B=` grep -i $backend $f  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$2 ;count=count+1}END{print sum/count}'`
+C=` grep -i $backend $f  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$3 ;count=count+1}END{print sum/count}'`
+D=` grep -i $backend $f  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$4 ;count=count+1}END{print sum/count}'`
+E=` grep -i $backend $f  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$5 ;count=count+1}END{print sum/count}'`
+
+
+
+
+
+#checking the concurrent connections
+
+G=` grep -i $backend $f  | awk '{print $19}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$1 ;count=count+1}END{print sum/count}'`
+H=` grep -i $backend $f  | awk '{print $19}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$2 ;count=count+1}END{print sum/count}'`
+I=` grep -i $backend $f  | awk '{print $19}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$3 ;count=count+1}END{print sum/count}'`
+J=` grep -i $backend $f  | awk '{print $19}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$4 ;count=count+1}END{print sum/count}'`
+K=` grep -i $backend $f  | awk '{print $19}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$5 ;count=count+1}END{print sum/count}'`
+
+#checking the success rate
+
+total=`grep -i $backend $f | grep -v  " 304 " |wc -l `
+success=` grep -i $backend $f | grep -v  " 304 " |grep   " 200 " |wc -l `
+successt=`expr 100 \* $success`
+
+L=`expr $successt / $total `
+
+#checking the number of connections
+
+M=` grep -i $backend $f  |wc -l `
+
+echo "$f - $A $B $C $D $E - $G $H $I $J $K - $L $M" >> /home/haproxy/out/$backend
+
+done < "$input"
+
+done

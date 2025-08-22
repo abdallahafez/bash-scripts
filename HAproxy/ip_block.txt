@@ -1,0 +1,97 @@
+#!/bin/bash
+CURTIME=$(date +%s)
+t_hour=`date "+%Y-%m-%dT%H"`
+t_minute=`date "+%Y-%m-%dT%H:%M"`
+t_minute1=`date -d '1 minute ago' "+%Y-%m-%dT%H:%M"`
+t_minute5=`date -d '5 minute ago' "+%Y-%m-%dT%H:%M"`
+ALARM_LOG_TIME=`date '+%Y-%m-%d %H:%M:%S.%3N%z'`
+log="/var/log/haproxy/haproxy.log"
+dir="/opt/l3/scripts/block_ip"
+PID_FILE=/opt/l3/scripts/block_ip/block.pid
+if [ -f ${PID_FILE} ]; then
+  RUNNING=$(ps aux | grep $(cat ${PID_FILE}) | grep block.sh)
+ 
+  if [ ! -z "${RUNNING}" ]; then
+    echo "$ALARM_LOG_TIME An instance of blcok.sh is already running." >> $dir/block.log
+   # exit;
+  fi
+fi
+echo $$ > ${PID_FILE}
+grep $t_minute1 $log >> $dir/haproxy-$t_minute1
+cat $dir/haproxy-$t_minute1 |grep gateway_frontend |grep " 404 " |grep -v "fallback"|grep -v "/mpesa/images/gallery/" |grep -v "gateway_backend/<NOSRV>"|cut -d "]" -f2 |cut -d " " -f2 | cut -d ":" -f1 | sort | uniq -c |sed 's/  */ /g' >> $dir/tmp.log       
+        while read -r ips;
+              do
+                ip=`echo "$ips" |awk -F  " " '{print $2}'` 
+                num=`echo "$ips" |awk -F  " " '{print $1}'`
+                if [[ $num -gt 30  ]] ; then
+                        validate=`grep $ip $dir/ip.deny | wc -l`
+                         if [[ $validate -eq 0  ]] ; then
+                           echo "$ALARM_LOG_TIME | $ip | failed requests | $num" >> $dir/block.log
+                           echo "$ip;$CURTIME" >> $dir/ip.deny
+                           grep $ip $dir/haproxy-$t_minute1 >> $dir/analysis/$num-$ip-$t_minute1.log
+sudo iptables -I INPUT -s $ip -j DROP
+                         fi
+                fi
+               done < $dir/tmp.log
+rm -rf $dir/tmp.log 
+find $dir/haproxy-20*  -type f  -mmin +20  -exec rm {''} \;
+find  $dir/analysis/  -name '*.log' -type f -mtime +1 -exec gzip -f {''} \;
+cat $dir/haproxy-$t_minute1 |grep gateway_frontend |grep " 404 " |grep -v "fallback"|grep  "/mpesa/images/" |grep -v "gateway_backend/<NOSRV>"|cut -d "]" -f2 |cut -d " " -f2 | cut -d ":" -f1 | sort | uniq -c |sed 's/  */ /g'>> $dir/tmp.log
+rm -rf $dir/haproxy-$t_minute5
+        while read -r ips;
+              do
+               ip=`echo "$ips" |awk -F  " " '{print $2}'`
+                num=`echo "$ips" |awk -F  " " '{print $1}'`
+                if [[ $num -gt 250  ]] ; then
+                        validate=`grep $ip $dir/ip.deny | wc -l`
+                         if [[ $validate -eq 0  ]] ; then
+                           echo "$ALARM_LOG_TIME | $ip | failed requests | $num" >> $dir/block.log
+                           echo "$ip;$CURTIME" >> $dir/ip.deny
+                           grep $ip $dir/haproxy-$t_minute1 >> $dir/analysis/$num-$ip-$t_minute1.log
+sudo iptables -I INPUT -s $ip -j DROP
+                         fi
+                fi
+               done < $dir/tmp.log
+rm -rf $dir/tmp.log
+y=1
+                while [ $y -le 29 ]; 
+                  do
+                  sudo sh $dir/block_curr.sh
+		  y=$(( $y + 1 ))
+		  t_sec=`date | awk -F  " " '{print $4}' | awk -F  ":" '{print $3}'`
+		  if [[ 10#$t_sec -gt 52  ]] ; then
+			break 
+		 fi
+
+		  done
+while read -r ipd;
+              do
+                time_st=`echo $ipd |awk -F";" '{print $2}'`
+                ip=`echo $ipd |awk -F";" '{print $1}'`
+                time_deny=`(expr $CURTIME - $time_st) `
+                if [[ $time_deny -gt 1800  ]] ; then
+                  echo "$ALARM_LOG_TIME | $ip | allowed after 30 minutes " >> $dir/block.log
+                  echo "$ip" >> $dir/ip.tmp 
+                x=1
+                while [ $x -le 11 ];
+                  do        
+sudo iptables -D INPUT -s $ip -j DROP 2> /dev/null
+                   R1=$?
+                        if [ "$R1" -eq 1 ]; then
+                        break
+                        fi
+                  x=$(( $x + 1 ))
+                done
+                fi
+              done < $dir/ip.deny
+        tmp=`cat $dir/ip.tmp  2> /dev/null`
+        R=$?
+        if [ "$R" -eq 0 ]; then 
+                while read -r ipa;
+                do
+                  grep -v $ipa $dir/ip.deny > $dir/ip2.tmp 
+                  mv $dir/ip2.tmp $dir/ip.deny
+                  #sed -i '/$ipa/d' "$dir/ip.deny"
+                done < $dir/ip.tmp
+                rm -rf $dir/ip.tmp
+        fi

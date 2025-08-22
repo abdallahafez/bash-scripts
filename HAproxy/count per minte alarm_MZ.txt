@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+
+conf=/etc/keepalived/keepalived.conf
+# Not sure why I can't do this in 1 step, but this works:
+vip=$(expr "$(cat $conf)" : '.*\bvirtual_ipaddress\s*{\s*\(.*\)/*}')
+vip=`expr "$vip" : '\([^ ]*\)' | sed 's/\./\\\\./g'`
+if /sbin/ip addr | grep -q "$vip"
+then    date >> /dev/null
+else    echo Secondary ; exit 1
+fi
+
+t_min=`date "+%M"`
+t_hour=`date "+%H"`
+t_day=`date "+%d"`
+t_month=`date "+%b"`
+l_date=`date "+%Y-%m-%d %T.223%z"`
+#echo "$t_month $t_day $t_hour:$t_min"
+path="/var/log/haproxy/haproxy.log"
+l_min2=`date -d '2 minute ago' "+%b %d %H:%M"`
+l_min3=`date -d '3 minute ago' "+%b %d %H:%M"`
+l_min4=`date -d '4 minute ago' "+%b %d %H:%M"`
+true=0
+c_min2=`grep "$l_min2" $path|grep -v "/haproxy?stats;csv"|wc -l  `
+c_min3=`grep "$l_min3" $path|grep -v "/haproxy?stats;csv"|wc -l  `
+c_min4=`grep "$l_min4" $path|grep -v "/haproxy?stats;csv"|wc -l  `
+al_log=/var/log/haproxy/alarm.log
+c_clear=`grep Haproxy_Count_ALM_02 $al_log | tail -n 1 | grep -v cleared | wc -l`
+FILETIME=$(sudo stat $al_log -c %Y)
+CURTIME=$(date +%s)
+diff=`(expr $CURTIME - $FILETIME)`
+
+if [[ 10#$t_hour -lt 06 ]]
+
+        then
+        if [[ $c_min2 -lt 1 ]] && [[ $c_min3 -lt 1 ]] && [[ $c_min4 -lt 1 ]]
+        then
+          true=1
+
+        fi
+
+else
+        if [[ c_min2 -lt 60 ]] && [[ c_min3 -lt 60 ]] && [[ c_min4 -lt 60 ]]
+        then
+           true=1
+               fi
+fi
+#echo $c_min2 $c_min3 $c_min4
+
+
+if [[ $true -eq 1 ]] && [[ $c_clear -eq 0 ]]
+
+        then
+        echo "$l_date|MINOR|Haproxy_Count_ALM_02|Application| The number of requests is too low with values $c_min2 $c_min3 $c_min4" >> $al_log
+	
+
+elif [[ $true -eq 1 ]] && [[ $diff -gt 600 ]]
+then
+systemctl restart haproxy
+echo "$l_date the haproxy service is restarted" >>  $al_log
+
+elif [[ $true -eq 0 ]] && [[ $c_clear -eq 1 ]]  && [[ $diff -gt 1200 ]]
+then
+echo "$l_date|NORMAL|Haproxy_Count_ALM_02|Application|Alarm cleared - Haproxy_Count_ALM_02" >> $al_log
+
+fi

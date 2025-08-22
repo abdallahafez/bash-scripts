@@ -1,0 +1,79 @@
+t_min=`date "+%M"`
+t_hour=`date "+%H"`
+t_day=`date "+%d"`
+t_month=`date "+%b"`
+l_date=`date "+%Y-%m-%d %T.223%z"`
+#echo "$t_month $t_day $t_hour:$t_min"
+path=/var/log/haproxy/haproxy.log
+if [[ t_day -lt 10  ]]
+
+then
+l_hour=`date -d '1 hour ago' "+%b  %-d %H:%M"`
+
+else
+l_hour=`date -d '1 hour ago' "+%b %-d %H:%M"`
+
+fi
+
+
+
+c_hour=`grep "$l_hour" $path |cut -d ":" -f1 |tail -n1 `
+
+
+
+#create an hour file
+
+rm -rf /opt/L2/scripts/haproxy/tmp/dates/out.log
+grep "$c_hour" $path >> /opt/L2/scripts/haproxy/tmp/dates/out.log
+
+log=/opt/L2/scripts/haproxy/tmp/dates/
+input="/opt/L2/scripts/haproxy/tmp/backend"
+
+while IFS= read -r backend
+
+do
+
+
+
+A=` grep -i $backend $log/out.log  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$1 ;count=count+1}END{print sum/count}'`
+N=` grep -i $backend $log/out.log  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$2 ;count=count+1}END{print sum/count}'`
+O=` grep -i $backend $log/out.log  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$3 ;count=count+1}END{print sum/count}'`
+P=` grep -i $backend $log/out.log  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$4 ;count=count+1}END{print sum/count}'`
+B=` grep -i $backend $log/out.log  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$5 ;count=count+1}END{print sum/count}'`
+C=` grep -i $backend $log/out.log  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$6 ;count=count+1}END{print sum/count}'`
+D=` grep -i $backend $log/out.log  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$7 ;count=count+1}END{print sum/count}'`
+E=` grep -i $backend $log/out.log  | awk '{print $13}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$8 ;count=count+1}END{print sum/count}'`
+
+
+
+#checking the concurrent connections
+
+G=` grep -i $backend $log/out.log  | awk '{print $19}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$1 ;count=count+1}END{print sum/count}'`
+H=` grep -i $backend $log/out.log  | awk '{print $19}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$2 ;count=count+1}END{print sum/count}'`
+I=` grep -i $backend $log/out.log  | awk '{print $19}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$3 ;count=count+1}END{print sum/count}'`
+J=` grep -i $backend $log/out.log  | awk '{print $19}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$4 ;count=count+1}END{print sum/count}'`
+K=` grep -i $backend $log/out.log  | awk '{print $19}'|awk -F "/" 'BEGIN{sum=0 ; count=0}{sum=sum+$5 ;count=count+1}END{print sum/count}'`
+
+#checking the success rate
+
+total=`grep -i $backend $log/out.log | grep -v  " 304 " |wc -l `
+success=` grep -i $backend $log/out.log | grep -v  " 304 " |grep   " 200 " |wc -l `
+successt=`expr 100 \* $success`
+
+L=`expr $successt / $total `
+
+#checking the number of connections
+
+M=` grep -i $backend $log/out.log  |wc -l `
+
+echo "$c_hour - $A $N $O $P $B $C $D $E - $G $H $I $J $K - $L $M" >> /opt/L2/scripts/haproxy/out/$backend
+
+done < "$input"
+
+if [[ $L -lt 60  ]]
+
+then
+echo "$l_date|MINOR|Success_Rate_02|Application| the success rate is lower than 60% " >> /var/log/alarm.log
+
+
+fi

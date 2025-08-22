@@ -1,0 +1,21 @@
+#!/bin/bash
+
+logdir=/home/mahma001/bl/analysis/
+backup=/opt/hazelcast/latest/logs/backuplogs/
+logfiles=`ls $logdir*.log `
+#echo $logfiles
+
+for file in $logfiles 
+do 
+
+timest=`echo "$file" | cut -d "-" -f3,4,5 | cut -d "." -f1`
+ip=`echo "$file" | cut -d "-" -f2`
+
+        while read -r line;
+              do
+		url=`echo $line|cut -d "}" -f 3 |cut -d " " -f 1,2,3`
+		code_r=`echo $line |  cut -d "]" -f 3| cut -d " " -f5 `
+		echo "$timest |$ip |$url |$code_r " >> $file.txt
+	done < $file
+rm -rf $file
+done

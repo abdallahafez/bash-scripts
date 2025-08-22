@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# Tells you if this node is the primary or secondary with keepalived
+
+conf=/etc/keepalived/keepalived.conf
+# Not sure why I can't do this in 1 step, but this works:
+vip=$(expr "$(cat $conf)" : '.*\bvirtual_ipaddress\s*{\s*\(.*\)/*}')
+vip=`expr "$vip" : '\([^ ]*\)' | sed 's/\./\\\\./g'`
+if ip addr | grep -q "$vip"
+then    echo Primary ; exit 0
+else    echo Secondary ; exit 1
+fi

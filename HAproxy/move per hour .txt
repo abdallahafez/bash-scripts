@@ -1,0 +1,5 @@
+while read -r hour;
+do
+echo $hour
+grep $hour   haproxy.log  >> /home/mahma001/haproxy-$hour
+done < /var/log/haproxy/hour
