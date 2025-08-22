@@ -1,0 +1,28 @@
+import smtplib
+sender = 'smartapp_checks@vodafone.co.tz '
+#receiverl= ['amr.abdelkader1@vodafone.com', 'mohamed.tolba@vodafone.com']
+#receiverl= [ 'mohamed.tolba@vodafone.com']
+receiverl= ['amr.abdelkader1@vodafone.com','mohamed.tolba@vodafone.com','aya.salah@vodafone.com','moustafa.saleh@vodafone.com','abdallah.mahmoudabdelhakim@vodafone.com','ali.mohamedsalem1@vodafone.com','karim.farag1@vodafone.com','mohamed.salahabdelhamid1@vodafone.com', 'michael.samir1@vodafone.com', 'fady.hanna@vodafone.com', 'nesma.elkomy@vodafone.com']
+ccl = []
+message1 = """smartapp_checks@vodafone.co.tz
+To: <amr.abdelkader1@vodafone.com>, <mohamed.tolba@vodafone.com>, <aya.salah@vodafone.com>, <moustafa.saleh@vodafone.com>, <abdallah.mahmoudabdelhakim@vodafone.com>, <ali.mohamedsalem1@vodafone.com>, <karim.farag1@vodafone.com>, <mohamed.salahabdelhamid1@vodafone.com>, <michael.samir1@vodafone.com>, <fady.hanna@vodafone.com>, <nesma.elkomy@vodafone.com>
+
+MIME-Version: 1.0
+Content-type: text/html
+Subject: Smartapp proactive checks
+
+
+
+
+<b>Hi All,</b>
+"""
+report_file = open('output.log')
+html = report_file.read()
+message = message1 + html
+receivers = receiverl + ccl
+try:
+   smtpObj = smtplib.SMTP('10.8.34.14', 25)
+   smtpObj.sendmail(sender, receivers, message)
+   print "Successfully sent email"
+except   smtplib.SMTPException:
+   print "Error: unable to send email"

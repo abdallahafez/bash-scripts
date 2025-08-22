@@ -1,0 +1,60 @@
+#!/bin/bash
+time_update() {
+NOW=`date '+%Y-%m-%d %H:%M'`
+ALARM_LOG_TIME=`date '+%Y-%m-%d %H:%M:%S.%3N%z'`
+}
+time_update
+TRAPIDFILE="/opt/wit/mpesa/watchdog/traps/trapid_tomcat"
+TRAPFILE="/opt/wit/mpesa/watchdog/traps/trapsweb_tomcat"
+TRAPIDFILE1=traps/trapid_tomcat
+TRAPFILE1=traps/trapsweb_tomcat
+TRAP_ID=`cat $TRAPIDFILE 2> /dev/null`
+SERVICE_t="mpesaTomcatTest"
+link_t="http://127.0.0.1:8082/mpesa-configuration-server/rest/version"
+TRAPS=`cat $TRAPFILE 2> /dev/null`
+process="tomcat"
+log="/opt/wit/mpesa/watchdog/logs/server.log"
+WDPATH="/opt/wit/mpesa/watchdog"
+alarm_file=/var/log/wit/mpesa/alarm.log
+alarm_raise() {
+                R3=`cat $alarm_file | grep SDK_Queue_full | tail -n1|grep -v cleared | wc -l `
+                if [ "$R3" == "0" ] ; then 
+                 echo "$ALARM_LOG_TIME|MINOR|SDK_Queue_full|Service|SDK Queue is full" >> $alarm_file
+                fi
+}
+alarm_clear() {
+                R4=`cat $alarm_file | grep SDK_Queue_full | tail -n1|grep cleared | wc -l `
+                if [ "$R4" == "0" ] ; then 
+                 echo "$ALARM_LOG_TIME|NORMAL|SDK_Queue_full|Service|Alarm cleared - SDK_Queue_full" >> $alarm_file
+                fi
+}
+send_watchdog ()
+ {
+#mpesaTomcatTest;5014
+        for name in $TRAPS 
+        do
+                SERVICE=`echo $name | cut -f1 -d";"`
+                TRAPID=`echo $name | cut -f2 -d";"`
+                if [ "$SERVICE" = "$SERVICE_t" ]; then
+                        echo "$ALARM_LOG_TIME Queue is full but previous error found related to tomcat will not perform restart " >> $log
+                        exit
+                fi
+        done
+       #cat $WDPATH/$TRAPFILE | grep -v "$SERVICE_t;" > $TRAPFILE 2> /dev/null
+        R2=`cat $TRAPFILE | grep "$SERVICE_t;" 2> /dev/null`
+        if [ -z "$R2" ]; then
+                 echo "$ALARM_LOG_TIME SDK Queue is full , need tomcat restart"  >> $log
+                 echo "$SERVICE_t;$TRAP_ID" >> $TRAPFILE
+                 sudo sh $WDPATH/scripts/alarmsender.sh raise $TRAP_ID "Full SDK Queue Error received $SERVICE_t ($link_t)" $process $TRAPFILE1 $TRAPIDFILE1 $WDPATH >> /root/time.log
+                 TRAP_ID=`echo "$TRAP_ID" |awk '{print 1+$SERVICE_t}' `
+        fi
+echo $TRAP_ID > $TRAPIDFILE
+}
+sdk=/var/log/wit/mpesa/sdk_monitoring.log
+num_seq=`cat $sdk | grep -i "SDK Consumer Queue size"|tail -n5 | sed 's/  */ /g' | cut -d "|" -f2| cut -d ":" -f2 | grep -v " 0"|wc -l`
+        if [[ $num_seq -gt 4  ]] ; then
+                alarm_raise
+                send_watchdog
+        else
+                alarm_clear
+        fi

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+echo " zipping the archive log files older than 2 days "
+sleep 2
+find /var/log/wit/*/archived/ -name '*.log' -type f -mtime +2 -exec gzip -f {''} \;
+
+echo " removing the log files older than 15 days "
+sleep 2
+find /var/log/wit/*/archived/  -type f -mtime +15  -exec rm {''} \;
+
+echo "zipping the messages logs"
+sleep 2
+cp /var/log/messages /home/mahma001/messages-$(date "+DATE %Y%m%d"| awk '{print $2}')
+gzip /home/mahma001/messages-$(date "+DATE %Y%m%d"| awk '{print $2}')
+truncate -s 5M /var/log/messages
+mv /home/mahma001/messages-$(date "+DATE %Y%m%d"| awk '{print $2}').gz /var/log/
+find /var/log/ -name "messages-2*" -type f -mtime +30  -exec rm {''} \;
+

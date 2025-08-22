@@ -1,0 +1,62 @@
+
+sar -r | awk '/Average/{print 100-($2+$5+$6)/24593812*100}'
+sar 1 5 | awk '/Average/{print 100-$8}'
+
+
+
+
+!bin/sh
+# Written By Youssef wadea
+#DAY=`/bin/date +%Y-%m-%d`
+YesterDay=`/bin/date --date yesterday +%Y-%m-%d`
+##########
+#
+###################
+#  Bearer Access  #
+###################
+/bin/mv /var/log/kannel/bearerbox/beareraccess.log /var/log/kannel/bearerbox/beareraccess_$YesterDay.log
+/bin/cat        /dev/null >  /var/log/kannel/bearerbox/beareraccess.log
+killall -HUP  /usr/local/kannel/sbin/bearerbox/bearerbox /usr/local/kannel/sbin/smsbox/smsbox|| true > /dev/null 2> /dev/null
+##############
+#  SQL BOX   #
+##############
+/bin/mv  /var/log/kannel/sqlbox/sqlbox.log  /var/log/kannel/sqlbox/sqlbox_$YesterDay.log
+/bin/cat        /dev/null >  /var/log/kannel/sqlbox/sqlbox.log
+killall -HUP  /usr/local/kannel/sbin/bearerbox /usr/local/kannel/sbin/sqlbox/sqlbox /usr/local/kannel/sbin/smsbox/smsbox || true > /dev/null 2> /dev/null
+################
+#  SMS Access  #
+################
+/bin/mv  /var/log/kannel/smsbox/smsaccess.log    /var/log/kannel/smsbox/smsaccess_$YesterDay.log
+/bin/cat        /dev/null > /var/log/kannel/smsbox/smsaccess.log
+killall -HUP  /usr/local/kannel/sbin/bearerbox/bearerbox /usr/local/kannel/sbin/bearerbox/smsbox|| true > /dev/null 2> /dev/null
+################
+#  Bearer Box  #
+################
+/bin/mv /etc/kannel_egypt/logs/bearerbox.log /etc/kannel_egypt/logs/bearerbox_$YesterDay.log
+/bin/cat        /dev/null > /etc/kannel_egypt/logs/bearerbox.log
+killall -HUP  /etc/kannel_egypt/sbin/bearerbox /etc/kannel_egypt/sbin/smsbox|| true > /dev/null 2> /dev/null
+#############
+#  SMS Box  #
+#############
+/bin/mv /etc/kannel_egypt/logs/smsbox.log /etc/kannel_egypt/logs/smsbox_$YesterDay.log
+/bin/cat        /dev/null > /etc/kannel_egypt/logs/smsbox.log
+killall -HUP  /etc/kannel_egypt/sbin/bearerbox /etc/kannel_egypt/sbin/smsbox|| true > /dev/null 2> /dev/null
+#############
+#  openSMPP #
+#############
+/bin/mv /var/log/kannel/opensmppbox/opensmppbox.log /var/log/kannel/opensmppbox/opensmppbox_$YesterDay.log
+/bin/cat        /dev/null > /var/log/kannel/opensmppbox/opensmppbox.log
+killall -HUP  /usr//local/kannel/sbin/opensmppbox /etc/kannel/opensmppbox.conf || true > /dev/null 2> /dev/null
+
+
+##############
+#  ALL Gzip  #
+##############
+/bin/gzip /var/log/kannel/bearerbox/beareraccess_$YesterDay.log
+/bin/gzip /var/log/kannel/smsbox/smsaccess_$YesterDay.log
+/bin/gzip /var/log/kannel/bearerbox/bearerbox_$YesterDay.log
+/bin/gzip /var/log/kannel/smsbox/smsbox_$YesterDay.log
+/bin/gzip /var/log/kannel/sqlbox/sqlbox_$YesterDay.log
+/bin/gzip /var/log/kannel/opensmppbox/opensmppbox_$YesterDay.log
+
+####################

@@ -1,0 +1,14 @@
+echo "shutting sb-serviceadapter"
+sh /opt/wit/mpesa/scripts/sb-serviceadapter-shutdown.sh
+sleep 5
+echo "shutting sb-storageservice "
+sh /opt/wit/mpesa/scripts/sb-storageservice-shutdown.sh
+sleep 5
+echo "shutting sb-servicemanager "
+sh /opt/wit/mpesa/scripts/sb-servicemanager-shutdown.sh
+sleep 5
+echo "shutting monymanager "
+sh /opt/wit/mpesa/scripts/moneymanager-shutdown.sh
+sleep 5
+echo "shutting sms-channel "
+sh /opt/wit/mpesa/scripts/sms-channel-shutdown.sh

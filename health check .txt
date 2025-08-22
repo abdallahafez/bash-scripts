@@ -1,0 +1,11 @@
+!/bin/bash
+
+echo "The memory Usage is"
+ sar -r | awk '/Average/{print 100-($2+$5+$6)/34824980*100}'
+echo "The CPU Usage is "
+sar 1 5 | awk '/Average/{print 100-$8}'
+
+date_log= date | awk '{print $3"/"$2"/"$6}'
+
+#grep "$date_log" /usr/local/apache2/logs/access_log | grep " 502 "  | wc -l
+#grep "$date_log" /usr/local/apache2/logs/access_log | grep " 503 "  | wc -l

@@ -1,0 +1,230 @@
+#!/bin/bash
+
+#sudo  sh   /home/tomcat/jpsstat.sh -1 | tail -n 6 |awk  '{print $4}' >/home/mahma001/hafez/mem1
+#ssh -t -q  10.154.11.120  "sudo  sh   /home/tomcat/jpsstat.sh -1" | tail -n 6 |awk  '{print $4}' >/home/mahma001/hafez/mem2
+#con_n1=`sudo -u root  grep ",Used=" /var/log/wit/mpesa/mobile-gateway-wit-db.log | awk -F "=" '{print $NF}' | awk -F "]" '{print $1}' | sort | uniq | sort -n |tail -1`
+#con_n2=`ssh -t -q  10.154.11.120  'sudo grep ",Used=" /var/log/wit/mpesa/mobile-gateway-wit-db.log '| awk -F "=" '{print $NF}' | awk -F "]" '{print $1}' | sort | uniq | sort -n |tail -1`
+aph502_c1=`sudo grep $(date -d '1 hour ago' "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log| cut -d " " -f 9| grep "502" |wc -l`
+aph502_c2=`ssh -t -q  10.154.11.120  'sudo  grep $(date -d "1 hour ago" "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log'|cut -d " " -f 9|grep "502" |wc -l`
+aph503_c1=`sudo grep $(date -d '1 hour ago' "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log|cut -d " " -f 9  |grep "503" |wc -l`
+aph503_c2=`ssh -t -q  10.154.11.120  'sudo  grep $(date -d "1 hour ago" "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log'|cut -d " " -f 9|  grep "503" |wc -l`
+heap_c1=`sudo sh   /home/tomcat/jpsstat.sh  -1 |grep Bootstrap|awk '{print $4}'`
+heap_c2=`ssh -t -q  10.154.11.120  'sudo sh   /home/tomcat/jpsstat.sh  -1 '|grep Bootstrap|awk '{print $4}'`
+sms_date=`date -d '1 hour ago' "+%d-%m-%y %H"`
+sms_count1=`sudo cat /var/log/wit/mpesa-sc/received.log  | awk "/$sms_date/ "' { print $0 }'|wc -l `
+sms_count2=`ssh -t -q  10.154.11.120 'sudo cat /var/log/wit/mpesa-sc/received.log'  | awk "/$sms_date/ "' { print $0 }'|wc -l `
+FILETIME1=$(sudo stat /var/log/wit/mpesa-sc/received.log -c %Y)
+FILETIME2=`ssh -t -q  10.154.11.120 'printf $(sudo stat /var/log/wit/mpesa-sc/received.log -c %Y)'`
+CURTIME=$(date +%s)
+file_dif1=`(expr $CURTIME - $FILETIME1) `
+file_dif2=`(expr $CURTIME - $FILETIME2) `
+t_hour=`date "+%H"`
+t_min=`date "+%M"`
+#t_hour=12
+#t_min=10
+
+root1_expire=` sudo chage -l root | grep -i "Password expires" |grep never | wc -l`
+mpesa1_expire=` sudo chage -l mpesa| grep -i "Password expires" |grep never | wc -l`
+tomcat1_expir=` sudo chage -l tomcat| grep -i "Password expires" |grep never | wc -l`
+root2_expire=`ssh -t -q  10.154.11.120  ' sudo chage -l root '| grep -i "Password expires" |grep never | wc -l`
+mpesa2_expire=`ssh -t -q  10.154.11.120  ' sudo chage -l mpesa'| grep -i "Password expires" |grep never | wc -l`
+tomcat2_expir=`ssh -t -q  10.154.11.120  ' sudo chage -l tomcat'| grep -i "Password expires" |grep never | wc -l`
+
+#echo $con_n2
+#echo $aph502_c1
+#echo $aph502_c2
+#echo $heap_c1
+#echo $heap_c2
+
+send_mail () {
+sleep 10
+  python /home/mahma001/hafez/mailhtml.py >>  /home/mahma001/hafez/mail.log
+  exit
+}
+
+head_html () {
+echo -n "" > output.log
+echo "<h2 style=background-color:#f2f2f2>System proactive Checks </h2>" >> output.log
+date >> output.log
+echo "<!DOCTYPE html>
+<html>
+<head>
+
+<link rel="stylesheet" type="text/css" href="mystyle.css">
+
+<style>
+#customers {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 70%;
+}
+
+#customers td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#customers tr:nth-child(even){background-color: #f2f2f2;}
+
+#customers tr:hover {background-color: #ddd;}
+
+#customers th {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  text-align: left;
+  background-color: #696969;
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<h2 style=background-color:#f2f2f2>Last hour Apache Errors and Tomcat Memory</h2>
+
+<table id=customers>
+  <tr>
+    <th>Host Name</th>
+    <th> Value </th>
+    <th> Threshold </th>
+  </tr>
+
+" >> output.log
+
+}
+
+normal_html () {
+
+echo "
+  <tr>
+    <td>tzvodasmtapp01 (502)</td>
+    <td>$aph502_c1</td>
+    <td>100 P3 <br> 200 P2</td>
+  </tr>
+
+ <tr>
+    <td>tzvodasmtapp02 (502)</td>
+    <td>$aph502_c2</td>
+    <td>100 P3 <br> 200 P2</td>
+  </tr>
+
+  <tr>
+    <td>tzvodasmtapp01 (503)</td>
+    <td>$aph503_c1</td>
+    <td>100 P3 <br> 200 P2</td>
+  </tr>
+
+  <tr>
+    <td>tzvodasmtapp02 (503)</td>
+    <td>$aph503_c2</td>
+    <td>100 P3 <br> 200 P2</td>
+
+ <tr>
+    <td>tzvodasmtapp01 (JVM_Heap)</td>
+    <td>$heap_c1 M </td>
+    <td>6.5G P3 <br> 7.2G P2 </td>
+  </tr>
+</tr>
+
+  <tr>
+    <td>tzvodasmtapp02 (JVM_Heap)</td>
+    <td>$heap_c2 M </td>
+    <td>6.5G P3 <br> 7.2G P2</td>
+  </tr>
+<tr>
+    <td>tzvodasmtapp01 <br> SMS file updated since</td>
+    <td> $file_dif1 s </td>
+    <td>1800s P2</td>
+ </tr>
+
+
+<tr>
+    <td>tzvodasmtapp02 <br> SMS file updated since </td>
+    <td>$file_dif2 s  </td>
+    <td>1800s P2</td>
+ </tr>
+" >> output.log
+}
+
+
+expire_html (){
+
+echo "<tr>
+    <td>tzvodasmtapp01 (root -mpesa - tomcat)</td>
+    <td>expiration status changed </td>
+    <td>Please check </td>
+  </tr>
+
+  <tr>
+    <td>tzvodasmtapp02 (root -mpesa - tomcat)</td>
+    <td>expiration status changed </td>
+    <td>Please check </td>
+  </tr> " >> output.log
+}
+
+
+tail_html () {
+
+echo "
+</table>
+</body>
+</html>
+" >> output.log
+}
+
+
+
+if  [[ $file_dif1 -gt 1800 ]]
+  then
+  sudo systemctl restart smschannel
+fi
+sleep 60
+if  [[ $file_dif2 -gt 1800 ]]
+  then
+  ssh -t -q  10.154.11.120  'sudo systemctl restart smschannel'
+fi
+
+if [[ $t_min -lt 15 ]] && [[ $t_hour -eq 12 ]]
+
+  then
+   if [[ $root1_expire -lt 1 ]] || [[ $mpesa1_expire -lt 1 ]] || [[ $mpesa1_expire -lt 1 ]] || [[ $tomcat1_expir -lt 1 ]] || [[ root2_expire -lt 1 ]] || [[    mpesa2_expire -lt 1 ]] || [[ $tomcat2_expir -lt 1 ]]
+   then
+      head_html
+      expire_html
+      tail_html
+      send_mail
+fi
+fi
+
+
+if [[ $t_min -lt 15 ]]
+  then
+    if [[ $t_hour -eq 10 ]]
+      then
+      head_html
+      normal_html
+      tail_html
+      send_mail
+
+    fi
+
+    if [[ $aph503_c1 -gt 100 ]] || [[ $aph503_c2 -gt 100 ]] || [[ $aph502_c1 -gt 100 ]] || [[ $aph502_c2 -gt 100 ]] || [[ $heap_c1 -gt 6500 ]] || [[ $heap_c2 -gt 6500 ]] || [[ $file_dif1 -gt 1800 ]] || [[ $file_dif2 -gt 1800 ]]
+       then
+      head_html
+      normal_html
+      tail_html
+      send_mail
+
+    fi
+
+ else
+
+    if  [[ $heap_c1 -gt 7000 ]] || [[ $heap_c2 -gt 7000 ]] || [[ $file_dif1 -gt 1800 ]] || [[ $file_dif2 -gt 1800 ]]
+       then
+      head_html
+      normal_html
+      tail_html
+      send_mail
+    fi
+ fi
+
+

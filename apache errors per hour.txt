@@ -1,0 +1,1 @@
+sudo cat  /etc/httpd/logs/access_log | cut -d " " -f 4,9 | grep " 502" |cut -d"[" -f 2 | cut -d " " -f 1 | cut -d ":" -f 1,2 |  sort | uniq -c

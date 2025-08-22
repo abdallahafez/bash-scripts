@@ -1,0 +1,14 @@
+echo "starting sb-serviceadapter"
+sh /opt/wit/mpesa/scripts/sb-serviceadapter-startup.sh
+sleep 5
+echo "starting sb-storageservice "
+sh /opt/wit/mpesa/scripts/sb-storageservice-startup.sh
+sleep 5
+echo "starting sb-servicemanager "
+sh /opt/wit/mpesa/scripts/sb-servicemanager-startup.sh
+sleep 5
+echo "starting monymanager "
+sh /opt/wit/mpesa/scripts/moneymanager-startup.sh
+sleep 5
+echo "starting sms-channel "
+sh /opt/wit/mpesa/scripts/sms-channel-startup.sh

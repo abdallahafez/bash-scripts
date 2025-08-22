@@ -1,0 +1,49 @@
+
+
+#!/bin/bash
+
+aph502_c1=`sudo grep $(date -d '1 hour ago' "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log| cut -d " " -f 9| grep "502" |wc -l`
+aph503_c1=`sudo grep $(date -d '1 hour ago' "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log|cut -d " " -f 9  |grep "503" |wc -l`
+heap_c1=`sudo sh   /home/tomcat/jpsstat.sh  -1 |grep Bootstrap|awk '{print $4}'`
+l_date=`date "+%Y-%m-%d %T.223%z"`
+
+if [[ $heap_c1 -ge 6000  ]] && [[ $heap_c1 -lt 7000 ]]
+then
+echo "$l_date|MINOR|Tomcat_Mem_ALM_03|Application|Tomcat memory is $heap_c1 - it hits the warning value (6G)
+" >> /var/log/TOM_MEM.log
+fi
+
+if [[ $heap_c1 -ge 7000 ]]
+then
+echo "$l_date|MINOR|Tomcat_Mem_ALM_02|Application|Tomcat memory is $heap_c1 - it hits the critical value (7G)
+" >> /var/log/TOM_MEM.log
+fi
+
+
+
+if [[ $aph502_c1 -ge 100 ]] && [[ $aph502_c1 -lt 200 ]]
+then
+echo "$l_date|MINOR|Appache_502_ALM_03|Application|Appache 502 errors are $aph502_c1 - it hits the warning value (100)
+" >> /var/log/TOM_MEM.log
+fi
+
+
+if [[ $aph502_c1 -ge 200 ]]
+then
+echo "$l_date|MINOR|Appache_502_ALM_02|Application|Appache 502 errors are $aph502_c1 - it hits the critical value (200)
+" >> /var/log/TOM_MEM.log
+fi
+
+if [[ $aph503_c1 -ge 100 ]] && [[ $aph503_c1 -lt 200 ]]
+then
+echo "$l_date|MINOR|Appache_503_ALM_03|Application|Appache 503 errors are $aph503_c1 - $
+" >> /var/log/TOM_MEM.log
+fi
+
+
+if [[ $aph503_c1 -ge 200 ]]
+then
+echo "$l_date|MINOR|Appache_503_ALM_02|Application|Appache 503 errors are $aph503_c1 - $
+" >> /var/log/TOM_MEM.log
+fi
+

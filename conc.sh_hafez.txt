@@ -1,0 +1,117 @@
+
+#!/bin/bash
+
+echo -n ""
+echo "<h2 style=background-color:#f2f2f2>System proactive Checks </h2>"
+
+date
+
+sudo  sh   /home/tomcat/jpsstat.sh -1 | tail -n 6 |awk  '{print $4}' >/home/mahma001/hafez/mem1
+ssh -t -q  10.154.11.120  "sudo  sh   /home/tomcat/jpsstat.sh -1" | tail -n 6 |awk  '{print $4}' >/home/mahma001/hafez/mem2
+#con_n1=`sudo -u root  grep ",Used=" /var/log/wit/mpesa/mobile-gateway-wit-db.log | awk -F "=" '{print $NF}' | awk -F "]" '{print $1}' | sort | uniq | sort -n |tail -1`
+#con_n2=`ssh -t -q  10.154.11.120  'sudo grep ",Used=" /var/log/wit/mpesa/mobile-gateway-wit-db.log '| awk -F "=" '{print $NF}' | awk -F "]" '{print $1}' | sort | uniq | sort -n |tail -1`
+aph502_c1=`sudo grep $(date -d '1 hour ago' "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log| cut -d " " -f 9| grep "502" |wc -l`
+aph502_c2=`ssh -t -q  10.154.11.120  'sudo  grep $(date -d "1 hour ago" "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log'|cut -d " " -f 9|grep "502" |wc -l`
+aph503_c1=`sudo grep $(date -d '1 hour ago' "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log|cut -d " " -f 9  |grep "503" |wc -l`
+aph503_c2=`ssh -t -q  10.154.11.120  'sudo  grep $(date -d "1 hour ago" "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log'|cut -d " " -f 9|  grep "503" |wc -l`
+heap_c1=`sudo sh   /home/tomcat/jpsstat.sh  -1 |grep Bootstrap|awk '{print $4}'`
+heap_c2=`ssh -t -q  10.154.11.120  'sudo sh   /home/tomcat/jpsstat.sh  -1 '|grep Bootstrap|awk '{print $4}'`
+sms_date=`date -d '1 hour ago' "+%d-%m-%y %H"`
+sms_count1=`sudo cat /var/log/wit/mpesa-sc/received.log  | awk "/$sms_date/ "' { print $0 }'|wc -l `
+sms_count2=`ssh -t -q  10.154.11.120 'sudo cat /var/log/wit/mpesa-sc/received.log'  | awk "/$sms_date/ "' { print $0 }'|wc -l `
+#mem_sum1=`awk '{s+=$1} END {printf "%.0f", s}' /home/mahma001/hafez/mem1`
+#mem_sum2=`awk '{s+=$1} END {printf "%.0f", s}' /home/mahma001/hafez/mem2`
+#echo $con_n2
+#echo $aph502_c1
+#echo $aph502_c2
+#echo $heap_c1
+#echo $heap_c2
+echo "<!DOCTYPE html>
+<html>
+<head>
+
+<link rel="stylesheet" type="text/css" href="mystyle.css">
+
+<style>
+#customers {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 50%;
+}
+
+#customers td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#customers tr:nth-child(even){background-color: #f2f2f2;}
+
+#customers tr:hover {background-color: #ddd;}
+
+#customers th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #696969;
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<h2 style=background-color:#f2f2f2>Last hour Apache Errors and Tomcat Memory</h2>
+
+<table id=customers>
+  <tr>
+    <th>Host Name</th>
+    <th>Apache  Errors count 502/503 </th>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp01 (502)</td>
+    <td>$aph502_c1</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02 (502)</td>
+    <td>$aph502_c2</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp01 (503)</td>
+    <td>$aph503_c1</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02 (503)</td>
+    <td>$aph503_c2</td>
+ <tr>
+    <td>tzvodasmtapp01 (JVM_Heap)</td>
+    <td>$heap_c1 M used of 8G</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02 (JVM_Heap)</td>
+    <td>$heap_c2 M used of 8G</td>
+  </tr>
+
+<tr>
+    <td>tzvodasmtapp01 SMS_Log_Count</td>
+    <td>$sms_count1 for last hour  </td>
+  </tr>
+
+
+<tr>
+    <td>tzvodasmtapp01 SMS_Log_Count</td>
+    <td>$sms_count2 for last hour  </td>
+  </tr>
+
+</table>
+</body>
+</html>
+"
+
+
+sleep 15
+python /home/mahma001/hafez/mailhtml.py >>  /home/mahma001/hafez/mail.log
+

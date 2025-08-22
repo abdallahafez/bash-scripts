@@ -1,0 +1,10 @@
+HB=`sudo date -d '1 hour ago' "+%Y-%m-%d %H"`
+Hazel_c1=`sudo grep "$HB" /var/log/wit/mpesa/sdk_monitoring.log |grep "Active SDK Queue Consumer" |cut -d ":" -f 4| grep -v " 10" | wc -l`
+
+
+if [ $Hazel_c1 != 0 ]
+
+then
+printf "There is an issue in node $HOSTNAME ,  The inactive threads cases are : $Hazel_c1 . \n \n for further investigation  Please run this command : \n grep 'Active SDK Queue Consumer' /var/log/wit/mpesa/sdk_monitoring.log |cut -d \":\" -f 4|sort |uniq -c \n . \n . \n " | mail -s "$(echo -e "[DRC] Hazelcast-Proactive-Check for $HOSTNAME \nContent-Type: text/html")" "<vmtsmartapp@vodafone.com> "
+
+fi

@@ -1,0 +1,95 @@
+<h2 style=background-color:#f2f2f2>System proactive Checks </h2>
+Tue Dec  7 02:00:02 EAT 2021
+<!DOCTYPE html>
+<html>
+<head>
+
+<link rel=stylesheet type=text/css href=mystyle.css>
+
+<style>
+#customers {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 50%;
+}
+
+#customers td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#customers tr:nth-child(even){background-color: #f2f2f2;}
+
+#customers tr:hover {background-color: #ddd;}
+
+#customers th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #696969;
+  color: white;
+}
+</style>
+</head>
+<body>
+<h2 style=background-color:#f2f2f2>Connection Pool</h2>
+<table id=customers>
+  <tr>
+    <th>Host Name</th>
+    <th>Connections </th>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp01</td>
+    <td>3</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02</td>
+    <td>3</td>
+
+  </tr>
+
+</table>
+
+<h2 style=background-color:#f2f2f2>Last hour Apache Errors</h2>
+
+<table id=customers>
+  <tr>
+    <th>Host Name</th>
+    <th>Apache  Errors count 502/503 </th>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp01 (502)</td>
+    <td>0</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02 (502)</td>
+    <td>0</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp01 (503)</td>
+    <td>0</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02 (503)</td>
+    <td>0</td>
+ <tr>
+    <td>tzvodasmtapp01 (JVM_Heap)</td>
+    <td>279 M used of 4G</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02 (JVM_Heap)</td>
+    <td>348 M used of 4G</td>
+
+
+  </tr>
+
+</table>
+</body>
+</html>

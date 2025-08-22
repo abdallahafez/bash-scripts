@@ -1,0 +1,21 @@
+#!/bin/bash
+
+logdir=/opt/hazelcast/latest/logs/archived/
+backup=/opt/hazelcast/latest/logs/backuplogs/
+gzip $backup*.log 2> /dev/null
+day=`date +%Y-%m-%d`
+day1=`date -d '1 day ago' +%Y-%m-%d`
+hour=` date "+%H.%M"`
+logfiles=`ls -tr  $logdir |grep $day| tail -n 7 `
+logfiles+=" "
+logfiles+=`ls -tr  $logdir |grep $day1| tail -n 7 `
+#echo $logfiles
+
+for file in $logfiles 
+do 
+mv --backup=existing $logdir$file $backup/$file$hour.log
+
+
+done
+
+/opt/hazelcast/latest/logs/logrotate.sh

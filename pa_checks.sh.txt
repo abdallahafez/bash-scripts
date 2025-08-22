@@ -1,0 +1,5 @@
+#!/bin/bash
+/home/tolbamoh/conc.sh > /home/tolbamoh/output.log
+sleep 60
+
+python mailhtml.py

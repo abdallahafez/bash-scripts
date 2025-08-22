@@ -1,0 +1,115 @@
+#!/bin/bash
+
+echo -n ""
+echo "<h2 style=background-color:#f2f2f2>System proactive Checks </h2>"
+
+date
+
+con_n1=`sudo -u root  grep ",Used=" /var/log/wit/mpesa/mobile-gateway-wit-db.log | awk -F "=" '{print $NF}' | awk -F "]" '{print $1}' | sort | uniq | sort -n |tail -1`
+con_n2=`ssh -t -q  172.18.65.238  'sudo grep ",Used=" /var/log/wit/mpesa/mobile-gateway-wit-db.log '| awk -F "=" '{print $NF}' | awk -F "]" '{print $1}' | sort | uniq | sort -n |tail -1`
+aph502_c1=`sudo grep $(date -d '1 hour ago' "+%d/%b/%Y:%H")  /usr/local/apache2/logs/access_log| grep " 502 " |wc -l`
+aph502_c2=`ssh -t -q  172.18.65.238  'sudo  grep $(date -d "1 hour ago" "+%d/%b/%Y:%H")  /usr/local/apache2/logs/access_log'|  grep " 502 " |wc -l`
+
+aph503_c1=`sudo grep $(date -d '1 hour ago' "+%d/%b/%Y:%H")  /usr/local/apache2/logs/access_log|  awk '{ print $9 }' |grep " 503 " |wc -l`
+aph503_c2=`ssh -t -q  172.18.65.238  'sudo  grep $(date -d "1 hour ago" "+%d/%b/%Y:%H")  /usr/local/apache2/logs/access_log'| awk '{ print $9 }'|  grep " 503 " |wc -l`
+heap_c1=`sudo sh   /home/tomcat/jpsstat.sh  -1 |grep Bootstrap|awk '{print $4}'`
+heap_c2=`ssh -t -q  172.18.65.238  'sudo sh   /home/tomcat/jpsstat.sh  -1 '|grep Bootstrap|awk '{print $4}'`
+
+#echo $con_n1
+#echo $con_n2
+#echo $aph502_c1
+#echo $aph502_c2
+echo "<!DOCTYPE html>
+<html>
+<head>
+
+<link rel="stylesheet" type="text/css" href="mystyle.css">
+
+<style>
+#customers {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 50%;
+}
+
+#customers td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#customers tr:nth-child(even){background-color: #f2f2f2;}
+
+#customers tr:hover {background-color: #ddd;}
+
+#customers th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #696969;
+  color: white;
+}
+</style>
+</head>
+<body>
+<h2 style=background-color:#f2f2f2>Connection Pool</h2>
+<table id="customers">
+  <tr>
+    <th>Host Name</th>
+    <th>Connections </th>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp01</td>
+    <td>$con_n1</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02</td>
+    <td>$con_n2</td>
+
+  </tr>
+
+</table>
+
+<h2 style=background-color:#f2f2f2>Last hour Apache Errors</h2>
+
+<table id=customers>
+  <tr>
+    <th>Host Name</th>
+    <th>Apache  Errors count 502/503 </th>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp01 (502)</td>
+    <td>$aph502_c1</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02 (502)</td>
+    <td>$aph502_c2</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp01 (503)</td>
+    <td>$aph503_c1</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02 (503)</td>
+    <td>$aph503_c2</td>
+ <tr>
+    <td>tzvodasmtapp01 (JVM_Heap)</td>
+    <td>$heap_c1 M used of 4G</td>
+
+  </tr>
+  <tr>
+    <td>tzvodasmtapp02 (JVM_Heap)</td>
+    <td>$heap_c2 M used of 4G</td>
+
+
+  </tr>
+
+</table>
+</body>
+</html>
+"
