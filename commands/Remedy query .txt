@@ -1,0 +1,7 @@
+('Status*' = "Assigned" OR 'Status*' = "In Progress" OR 'Status*' = "Pending") AND ('Assignee+' = "Amr AbdElKader" OR 'Assignee+' = "Mohamed Salah AbdElHamid" OR 'Assignee+' = "Abdallah MahmoudAbdElHakim" OR 'Assignee+' = "Ali Mohamed Salem" OR 'Assignee+' = "Mohamed Tolba" OR 'Assignee+' = "Aya Salah" OR 'Assignee+' = "Karim Farag" ) AND 'Assigned Group*+' = "VG MSAO Mobile Payment Operations Consumer OPS-APPL CON"
+
+
+
+
+
+('Status*' = "Assigned" OR 'Status*' = "In Progress" OR 'Status*' = "Pending") AND ('Assignee+' = "Abdallah MahmoudAbdElHakim" )

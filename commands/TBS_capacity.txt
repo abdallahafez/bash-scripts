@@ -1,0 +1,13 @@
+set lines 1000 ;
+set pages 10000 ;
+
+DG Capacity
+select NAME ,FREE_MB,TOTAL_MB,PERCENTAGE ,to_char(SDATE,'DD/MON/YYYY' ) "DATE"   from SYS.ASM_HIST where sdate>=sysdate-30 order by sdate;
+
+TBS Capacity
+select "Tablespace","Used MB",  "Free MB"   ,"Total MB"  ,"Pct. Free" ,to_char(SDATE,'DD/MON/YYYY' ) "DATE" from SYS.TABLESPACE_HIST where sdate>=sysdate-30 order by sdate; 
+
+
+/home/oracle/hafez/DG
+/home/oracle/hafez/TBS
+

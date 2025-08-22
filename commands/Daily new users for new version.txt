@@ -1,0 +1,12 @@
+select UNIQUE(msisdn),device_model, apk_version from mpesa.report_log where apk_version like '%2.5.7%' and request_time BETWEEN to_date('05-MAR-21', 'dd-MON-yy') AND to_date('06-MAR-21', 'dd-MON-yy')
+and device_model not like '%iPhone%';
+
+select UNIQUE(msisdn),device_model, apk_version from mpesa.report_log where apk_version like '%2.5.7%' and request_time BETWEEN to_date('05-MAR-21', 'dd-MON-yy') AND to_date('06-MAR-21', 'dd-MON-yy')
+and device_model like '%iPhone%';
+
+select UNIQUE(msisdn),device_model, apk_version from mpesa.report_log where apk_version='2.5.7'  and device_model  like '%iPhone%' ;
+
+
+INC000040189772
+
+INC000040249848

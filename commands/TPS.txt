@@ -1,0 +1,16 @@
+--Total TPS count
+
+select to_char(request_time,'dd-MON-yy hh12:mi:ss') , count(ID)
+from mpesa.aging_report_log 
+where request_time BETWEEN to_date('01-AUG-20', 'dd-MON-yy hh12:mi:ss') AND to_date('01-SEP-20', 'dd-MON-yy hh12:mi:ss')
+group by to_char(request_time,'dd-MON-yy hh12:mi:ss')
+order by 1;
+
+
+
+-- Failed TPS per type 
+select to_char(request_time,'dd-MON-yy hh12:mi:ss') ,sdk_operation,  count(ID)
+from mpesa.aging_report_log 
+where request_time BETWEEN to_date('01-AUG-20', 'dd-MON-yy hh12:mi:ss') AND to_date('01-SEP-20', 'dd-MON-yy hh12:mi:ss')and status = '1'
+group by to_char(request_time,'dd-MON-yy hh12:mi:ss'), sdk_operation
+order by 1;

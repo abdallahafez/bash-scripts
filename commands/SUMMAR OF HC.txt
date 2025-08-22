@@ -1,0 +1,59 @@
+sar -r | awk '/Average/{print 100-($2+$5+$6)/8008972*100}'
+backend
+grep "01/Mar/2022" /usr/local/apache2/logs/access_log| awk '{ print $9 }'|grep "502"|wc -l
+grep "01/Mar/2022" /usr/local/apache2/logs/access_log| awk '{ print $9 }'|grep "503"|wc -l
+
+
+grep "03/Mar/2022" /etc/httpd/logs/access_log |  awk '{ print $9 }' |grep "502"  | wc -l
+grep "03/Mar/2022" /etc/httpd/logs/access_log |  awk '{ print $9 }' |grep "503"  | wc -l
+
+LB MZ
+
+curl -v telnet://10.205.23.84:8080
+curl -v telnet://ag.m-pesa.vm.co.mz:443
+curl -v telnet://10.205.23.84:8081
+
+tail /var/log/wit/mpesa/sdk-alarm.log
+tail /var/log/wit/mpesa/alarm.log
+tail /var/log/wit/mpesa-sc/sms-channel-alarm.log
+
+DB Connections
+
+date; grep ",Used=" /var/log/wit/mpesa/mobile-gateway-wit-db.log | awk -F "=" '{print $NF}' | awk -F "]" '{print $1}' | sort | uniq | sort -n
+date; grep ",Used=" /var/log/wit/mpesa/mobile-gateway-wit-db.log | awk -F "=" '{print $NF}' | awk -F "]" '{print $1}' | tail  -1
+
+LB TZ PR
+
+telnet 172.18.65.233 8080
+telnet 172.18.65.233 8081
+telnet apigw.m-pesa.co.tz 8085
+telnet 197.250.66.72 8086
+
+
+LB TZ DR
+
+telnet 10.152.0.13 8080
+telnet 10.152.0.13 8081
+telnet apigw.m-pesa.co.tz 8085
+telnet 197.250.3.5 8086
+
+LB DRC
+
+fcm.googleapis.com 443
+
+10.90.104.55 19011
+
+10.90.104.55 19012
+
+10.90.104.55 18334
+
+10.245.96.20 8455
+
+172.18.12.155 8080
+
+172.18.12.155 8081
+
+DRC rublication 
+
+dgmgrl / as sysdba
+show configuration

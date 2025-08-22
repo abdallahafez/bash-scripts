@@ -1,0 +1,11 @@
+zgrep -i g2xmlapi_backend haproxy.log  | awk -F " " '{print $14}'| sort | uniq -c
+   6380 200
+     54 500
+   2841 503
+    125 504
+
+ grep "2022-01-11" haproxy.log | grep -i balance | awk -F ":" '{print $1}' | awk -F "T" '{print $2}' | sort | uniq -c
+
+    322 00
+    164 01
+    129 02

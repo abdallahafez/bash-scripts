@@ -1,0 +1,5 @@
+sed 's/  */ /g' replace all spaces with one 
+
+sed 's/ //' remove the first spaces
+
+sed 's/\r//g' remove the beginning of haproxy 

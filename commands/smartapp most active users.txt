@@ -1,0 +1,18 @@
+--Android
+
+select count(ID) AS Count_of_TXN, msisdn 
+from mpesa.aging_report_log
+where request_time BETWEEN to_date('01-OCT-20', 'dd-MON-yy') AND to_date('01-JAN-21', 'dd-MON-yy')
+and device_model not like '%iPhone%'
+group by msisdn
+order by 1 desc;
+
+
+--IOS
+
+select count(ID) AS Count_of_TXN , msisdn 
+from mpesa.aging_report_log
+where request_time BETWEEN to_date('01-OCT-20', 'dd-MON-yy') AND to_date('01-JAN-21', 'dd-MON-yy')
+and device_model like '%iPhone%'
+group by msisdn
+order by 1 desc;

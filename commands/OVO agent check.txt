@@ -1,0 +1,9 @@
+sudo -root /opt/OV/bin/opcagt -stop 
+sudo -root /opt/OV/bin/opcagt -start
+sudo -root /opt/OV/bin/opcagt -status
+
+
+
+(xpl-331) connect() to '[85.205.246.115]:383' failed.
+  (RTL-107) Transport endpoint is not connected
+  (xpl-331) connect() to '[85.205.246.115]:383' failed.

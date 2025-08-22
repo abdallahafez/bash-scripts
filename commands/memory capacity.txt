@@ -1,0 +1,21 @@
+﻿sar -r 5 2
+
+ls /var/log/sa
+
+
+MEM Capacity
+
+for f in $(ls -tr /var/log/sa/|grep -v sar) ;do sadf  -t -h -d --  -r    /var/log/sa/$f ; done | sed 's/;/,/g' >/tmp/MEM_DB02.csv 
+kbmemfree + kbbuffers + kbcached = actual free memory on the system 
+
+
+CPU Capacity
+
+for f in $(ls -tr /var/log/sa/|grep -v sar) ;do sadf  -dht /var/log/sa/$f ; done | sed 's/;/,/g' |grep -v timestamp >/tmp/CPU_DB02.csv
+
+
+Total cpu = 100 - idle
+
+
+
+scp salaha01@41.76.144.134:~/test ./

@@ -1,0 +1,8 @@
+sudo -root /opt/OV/bin/opcagt -status  (Aya)
+
+****************
+Cd /opt/OV/bin
+./ovc -kill
+./ovc -start
+./ovc
+*************** OVO team

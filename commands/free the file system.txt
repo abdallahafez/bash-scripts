@@ -1,0 +1,38 @@
+Smartapp
+
+find /var/log/wit/mpesa/archived/ -name '*.log.2021-11-*' -type f -exec gzip -f {''} \;
+find /var/log/wit/mpesa/archived/  -type f -mtime +15  -exec rm {''} \;
+find /var/log/wit/mpesa-serviceadapter/archived/ -name '*.2021-10-*.log' -type f -exec gzip {''} \;
+find /var/log/wit/mpesa-servicemanager/archived/ -name '*.2021-10-*.log' -type f -exec gzip {''} \;
+find /var/log/pvpnc01zatcap/  -type f -mtime +16  -exec rm {''} \;
+
+
+find /var/log/wit/*/archived/ -name '*.log' -type f -exec gzip -f {''} \;
+find /var/log/wit/*/archived/  -type f -mtime +15  -exec rm {''} \;
+
+find /var/log/wit/mpesa-serviceadapter/archived/
+find /var/log/wit/mpesa-storageservice/archived/
+find /var/log/wit/mpesa-sc/archived/
+find /var/log/wit/mpesa-servicemanager/archived/
+
+
+
+
+
+
+truncate -s 5M /opt/wit/servicebuilder/serviceadapter/logs/service-adapter.log
+truncate -s 5M /opt/wit/servicebuilder/servicemanager/logs/mini_app.log
+
+
+MFT 
+
+find /app/oracle/product/12.2.0.1/rdbms/audit  -type f -mtime +5  {''} \;
+find /app/oracle/diag  -type f -mtime +5 -name '*.trc'  -exec rm {''} \;
+find /app/  -type f -mtime +5 -name '*.trm'  -exec rm {''} \;
+
+
+
+
+
+
+

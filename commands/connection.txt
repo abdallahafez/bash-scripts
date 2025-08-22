@@ -1,0 +1,3 @@
+GW connectivity  10.205.23.84:8080   gateway_backend   172.18.12.155:8080
+G2 connectivity   ag.m-pesa.vm.co.mz:443  g2xmlapi_backend   10.245.108.20:8455
+BO connectivity   10.205.23.84:8081   backoffice_backend   172.18.12.155:8081

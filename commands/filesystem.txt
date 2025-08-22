@@ -1,0 +1,24 @@
+
+/
+sudo find  /export/home/mpesaadmin/backup/ -mtime +30 -exec rm {''} \; 
+
+-------------------------------------------------------------------------------------
+/usr/local/apache2
+or /usr/local/tomcat
+
+cp access_log or error_log to empty directory
+truncate -s 0 access_log
+
+
+gzip backup file 
+then mov to /usr/local/apache2
+----------------------------------------------------------------------------------------------------------
+sudo find  /var/log/wit/mpesa-sc/archived -mtime +60 -exec rm {''} \; 
+
+----------------------------------------------------------------------------------------------------
+
+for DB /app
+/app/oracle/diag/tnslsnr/mzsmrtdb4/asmnet1lsnr_asm/trace
+
+/grid
+/grid/oracle/product/12.2.0.1/rdbms

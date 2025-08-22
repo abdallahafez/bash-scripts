@@ -1,0 +1,19 @@
+/opt/OV/lbin/eaagt/opcmona
+opcmona     OVO Monitor Agent                   AGENT,EA     (10141) 
+
+
+
+/opt/OV/lbin/agtrep/agtrep
+/opt/perf/bin/perfalarm
+
+
+sudo /opt/perf/bin/perfalarm status perf
+sudo /opt/perf/bin/perfalarm start
+
+sudo sh /opt/OV/bin/opcagt -status
+
+
+
+
+
+$SET_OPC_LANG ${OV_BIN_DIR}/ovc -status

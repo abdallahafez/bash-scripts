@@ -1,0 +1,1 @@
+cat /var/log/wit/mpesa-sc/received.log  | awk "/Message/ "' { print $0 }'| cut -d ":" -f 1 | sort | uniq -c
