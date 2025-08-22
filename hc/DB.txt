@@ -1,0 +1,12 @@
+sqlplus sys/De34rfcd#123@PSMART_PROD as sysdba << EOF
+select t1.tablespace_name,
+round(t1.tot/1024/1024,2) "Total(MB)",
+round(t2.free/1024/1024,2) "Free(MB)",
+round((t1.tot-t2.free)/1024/1024,2) "Used(MB)",
+round((t1.tot-t2.free)/t1.tot*100,2) "UsedPercent" from
+(select tablespace_name,sum(bytes) tot from dba_data_files group by tablespace_name union all
+select tablespace_name,sum(bytes) from dba_temp_files group by tablespace_name) t1 ,(select tablespace_name,sum(bytes) free from dba_free_space group by tablespace_name union all
+select tablespace_name, free_space from dba_temp_free_space) t2
+where t1.tablespace_name=t2.tablespace_name order by "UsedPercent" desc;
+exit;
+EOF

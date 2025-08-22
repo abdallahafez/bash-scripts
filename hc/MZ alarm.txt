@@ -1,0 +1,117 @@
+echo "================================================="
+echo "checking cpu and memory"
+echo "================================================="
+
+mem=`printf $(sar -r | awk '/Average/{print 100-($2+$5+$6)/8008972*100}') `
+cpu=`sar 1 5 | awk '/Average/{print 100-$8}'`
+#mem=10
+#cpu=10
+
+echo "The memory Usage is $mem ......"
+echo "The CPU Usage is    $cpu ......"
+
+#if [[ $mem -lt 80 ]]
+#then
+#echo "The memory Usage is $mem ...... OK "
+#else
+#echo "The memory Usage is $mem ...... Failed  "
+#fi
+
+#if [[ $cpu  -lt 80 ]]
+#then
+#echo "The CPU Usage is $cpu ...... OK "
+#else
+#echo "The CPU Usage is $cpu ...... Failed  "
+#fi
+#exit
+
+echo " "
+echo " "
+echo "================================================="
+echo "checking alarms "
+echo "================================================="
+sleep 2
+#path_ar=("/var/log/wit/mpesa/alarm.log" "/var/log/wit/mpesa-sc/sms-channel-alarm.log")
+l_date=`date "+%Y-%m-%d"`
+i=0
+input="/health_check/paths"
+while IFS= read -r path
+do
+        echo "Checking ..... ${path}"
+        alarm_ar=( $(tail -n 200 $path |grep $l_date| grep -v null | grep -v true |grep -v bind|grep -v SMSC_ALM_01  |cut -d "|" -f 3 | sort |uniq) )
+         for alarm in ${alarm_ar[@]}; do
+             count=`grep $alarm $path | tail -n 1 | grep cleared | wc -l`
+             if [[ $count -eq 1 ]]
+              then
+              echo "$alarm ...... cleared ........ OK "
+              num=`grep $alarm $path | grep -v cleared | wc -l`
+              echo "The alarm $alarm is repeated $num times"
+              echo ""
+             else
+              echo "$alarm alarm is not cleared ......  Failed "
+              num=`grep $alarm $path | grep -v cleared | wc -l`
+              echo "The alarm $alarm is repeated $num times"
+              echo ""
+              i=$((i+1))
+             fi
+         done
+
+done < "$input"
+c_smsc=`grep SMSC_ALM_01 /var/log/wit/mpesa-sc/sms-channel-alarm.log | tail -n 1 | grep cleared | wc -l`
+cl_smsc=`grep SMSC_ALM_01 /var/log/wit/mpesa-sc/sms-channel-alarm.log | tail -n 1  | wc -l`
+sleep 2
+F_received=$(sudo stat /var/log/wit/mpesa-sc/received.log -c %Y)
+F_sent=$(sudo stat /var/log/wit/mpesa-sc/sent.log -c %Y)
+CURTIME=$(date +%s)
+file_dif1=`(expr $CURTIME - $F_sent) `
+file_dif2=`(expr $CURTIME - $F_sent) `
+
+
+ if [[ $c_smsc -eq 1 ]] || [[ $cl_smsc -eq 0 ]]
+        then
+        echo "SMSC_ALM_01 ...... cleared ........ OK "
+        else
+           if [[ $file_dif1 -lt 120 ]] && [[ $file_dif2 -lt 120 ]]
+           then
+           echo "SMSC_ALM_01 not cleared but received.log and sent.log keep updated ........... Warning"
+           else
+           echo "SMSC_ALM_01 alarm is not cleared sms service has an issue ......  Failed "
+           i=$((i+1))
+           fi
+ fi
+
+if [[ $i -eq 0 ]]
+then
+echo " "
+echo "all alarms are cleared .. OK . OK . OK "
+
+echo " "
+else
+echo " alarms not cleared needs to be investigted "
+fi
+
+sleep 1
+echo " "
+echo " "
+echo "================================================="
+echo " checking apache logs "
+echo "================================================="
+
+aph502_c1=`sudo grep $(date -d '1 hour ago' "+%d/%b/%Y:%H")  /usr/local/apache2/logs/access_log | cut -d " " -f 9| grep "502" |wc -l`
+#aph502_c2=`ssh -t -q  10.154.11.120  'sudo  grep $(date -d "1 hour ago" "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log'|cut -d " " -f 9|grep "502" |wc -l`
+aph503_c1=`sudo grep $(date -d '1 hour ago' "+%d/%b/%Y:%H")  /usr/local/apache2/logs/access_log |cut -d " " -f 9  |grep "503" |wc -l`
+#aph503_c2=`ssh -t -q  10.154.11.120  'sudo  grep $(date -d "1 hour ago" "+%d/%b/%Y:%H")  /etc/httpd/logs/access_log'|cut -d " " -f 9|  grep "503" |wc -l`
+
+if [ $aph502_c1 -lt 100 ]
+then
+echo " apache 502 count is  $aph502_c1 ................ OK"
+else
+echo " apache 502 count is  $aph502_c1 .............. Failed"
+fi
+
+if [ $aph503_c1  -lt 100 ]
+then
+echo " apache 503 count is $aph503_c1 ................. OK"
+else
+echo " apache 503 count is  $aph503_c1 ............... Failed"
+fi

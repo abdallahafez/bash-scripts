@@ -1,0 +1,11 @@
+input="/health_check/connections"
+while IFS= read -r connection
+do
+timeout 2 bash -c "</dev/tcp/$connection"
+if [[ $? -eq 0 ]]
+then
+echo " The connection to $connection is ........ OK  "
+else
+echo " The connection to $connection is ........ Failed  "
+fi
+done < "$input"
